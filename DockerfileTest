@@ -1,0 +1,28 @@
+ARG image
+
+FROM $image
+
+COPY tests tests/
+COPY features features/
+COPY behat.yml.dist behat.yml.dist
+COPY phpunit.xml.dist phpunit.xml.dist
+COPY .env.test .env.test
+
+RUN composer install --prefer-dist --no-interaction --no-progress --no-suggest \
+    && composer clear-cache \
+# Permissions hack because setfacl does not work on Mac and Windows
+    && chown -R www-data var \
+    && chmod -R ug+rwx var
+
+# REMOVE the demo file created by behat/symfony2-extension recipe (https://github.com/symfony/recipes/issues/450)
+RUN rm -f features/demo.feature
+
+RUN php bin/console lint:yaml config 1> exit
+RUN php bin/console lint:twig src 1> exit
+#RUN php vendor/bin/security-checker security:check 1> exit
+
+RUN php vendor/bin/phpstan analyse src/ --level 7
+
+RUN grep -rnw 'src' -e 'dump(' 1>&2 && exit 1 || exit 0
+
+RUN php vendor/bin/behat -v

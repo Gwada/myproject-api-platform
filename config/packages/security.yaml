@@ -1,0 +1,57 @@
+security:
+
+    encoders:
+        App\Entity\User:
+            algorithm: auto
+
+        # For Basic Authentication
+        Symfony\Component\Security\Core\User\User:
+            algorithm: auto
+
+    role_hierarchy:
+        ROLE_USER:  []
+        ROLE_ADMIN: [ROLE_USER]
+        ROLE_ROOT:  [ROLE_ADMIN]
+
+    # http://symfony.com/doc/current/book/security.html#where-do-users-come-from-user-providers
+    providers:
+        default:
+            id: App\Repository\UserRepository
+        in_memory:
+            memory:
+                users:
+                    user-admin: { password: '%env(API_ADMIN_PASSWORD)%', roles: 'ROLE_ROOT' }
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        api_admin_login:
+            pattern:  ^/api/login
+            stateless: true
+            anonymous: true
+            provider: default
+            form_login:
+                check_path:               /api/login_check
+                success_handler:          lexik_jwt_authentication.handler.authentication_success
+                failure_handler:          lexik_jwt_authentication.handler.authentication_failure
+                require_previous_session: false
+
+        api_admin:
+            pattern:   ^/api
+            stateless: true
+            entry_point: app.basic_entry_point
+            http_basic:
+                provider: in_memory
+            guard:
+                provider: default
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
+
+    access_control:
+        - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/api/mailbox/read, roles: [ROLE_ROOT] }
+        - { path: ^/api/sms/send, roles: [ROLE_ROOT] }
+        - { path: ^/api/logs, roles: [ROLE_USER] }
+        - { path: ^/api, roles: [ROLE_ADMIN] }

@@ -1,0 +1,31 @@
+monolog:
+    handlers:
+        main:
+            type: fingers_crossed
+            action_level: error
+            handler: grouped
+            excluded_http_codes: [404, 405]
+        grouped:
+            type:    group
+            members: [streamed, deduplicated]
+        streamed:
+            type:  stream
+            path:  "%kernel.logs_dir%/%kernel.environment%.log"
+            level: debug
+        nested:
+            type:  stream
+            path:  "php://stdout"
+            level: info
+        deduplicated:
+            type:    deduplication
+            handler: swift
+        swift:
+            type:       swift_mailer
+            from_email: "%env(MAILER_APP_SENDER)%"
+            to_email:   "%env(MAILER_TEAM_RECEIVER)%"
+            subject:    "[Sms4Ticket-api] An Error Occurred!"
+            level:      debug
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!doctrine"]

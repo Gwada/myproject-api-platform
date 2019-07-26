@@ -1,0 +1,18 @@
+api_platform:
+    enable_swagger: false
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity']
+    title: Email2Sms API Platform
+    version: 1.0.0
+    collection:
+        pagination:
+            client_enabled: true
+            client_items_per_page: true
+            items_per_page: 1000
+    formats:
+        json:     ['application/json']
+        html:     ['text/html']
+        jsonld:   ['application/ld+json']
+
+twig:
+    strict_variables: "%kernel.debug%"
